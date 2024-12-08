@@ -1,11 +1,11 @@
-sklearn
+scikit-learn
 pandas
 argparse
 keras
-tensorflow==1.15
-matplotlib>=3.0.2
-numpy>=1.14.6
-scipy>=1.1.0
-torch>=1.1.0
+tensorflow
+matplotlib
+numpy
+scipy
+torch
 tensorboardX
 visdom
