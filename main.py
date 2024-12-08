@@ -12,6 +12,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+from model.model_pytorch import train, predict, forecast_future
 
 frame = "pytorch"  # Options: "keras", "pytorch", "tensorflow"
 if frame == "pytorch":
@@ -49,7 +50,7 @@ class Config:
     do_predict = True
     add_train = False
     shuffle_train_data = True
-    use_cuda = False
+    use_cuda = True
 
     train_data_rate = 0.9
     valid_data_rate = 0.2  # Increased validation portion to get a better estimate of generalization
