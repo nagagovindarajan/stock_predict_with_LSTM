@@ -7,6 +7,7 @@ import torch
 from torch.nn import Module, LSTM, Linear
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
+from torch.nn import DataParallel
 
 class Net(Module):
     def __init__(self, config):
@@ -31,16 +32,17 @@ class Net(Module):
 def train(config, logger, train_and_valid_data):
     train_X, train_Y, valid_X, valid_Y = train_and_valid_data
     train_X, train_Y = torch.from_numpy(train_X).float(), torch.from_numpy(train_Y).float()
-    train_loader = DataLoader(TensorDataset(train_X, train_Y), batch_size=config.batch_size)
+    train_loader = DataLoader(TensorDataset(train_X, train_Y), batch_size=config.batch_size, shuffle=True)
 
     valid_X, valid_Y = torch.from_numpy(valid_X).float(), torch.from_numpy(valid_Y).float()
     valid_loader = DataLoader(TensorDataset(valid_X, valid_Y), batch_size=config.batch_size)
 
-    device = torch.device("cuda:0" if config.use_cuda and torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if config.use_cuda and torch.cuda.is_available() else "cpu")
     # device = torch.device("cuda") if torch.cuda.is_available() else torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
     print("The device is {}".format(device))
 
     model = Net(config).to(device)
+    model = DataParallel(model)  # Use both GPUs
     if config.add_train:
         model.load_state_dict(torch.load(config.model_save_path + config.model_name))
     optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate, weight_decay=1e-4)
@@ -114,7 +116,7 @@ def predict(config, test_X):
     # Load model
     device = torch.device("cuda:0" if config.use_cuda and torch.cuda.is_available() else "cpu")
     model = Net(config).to(device)
-    model.load_state_dict(torch.load(config.model_save_path + config.model_name))   # Load model parameters
+    model.load_state_dict(torch.load(config.model_save_path + config.model_name, map_location=device))   # Load model parameters
 
     # First define a tensor to save the prediction results
     result = torch.Tensor().to(device)
@@ -139,7 +141,7 @@ def forecast_future(config, start_sequence, n_future_steps=10):
 
     device = torch.device("cuda:0" if config.use_cuda and torch.cuda.is_available() else "cpu")
     model = Net(config).to(device)
-    model.load_state_dict(torch.load(config.model_save_path + config.model_name))
+    model.load_state_dict(torch.load(config.model_save_path + config.model_name, map_location=device))
     model.eval()
 
     start_sequence = start_sequence.to(device)
